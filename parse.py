@@ -4,7 +4,6 @@ import subprocess
 import openpyxl as xl
 import xlrd as x
 
-
 # verifies that a given filename has .xlsx extension
 # if it does not, an error is thrown
 def check_extension(filename):
@@ -22,7 +21,6 @@ def check_extension(filename):
 	if extension!=good_extension:
 		sys.exit("must pass in .xlsx files")
 
-
 # verifies that file exists
 # if it does not, an error is thrown
 def check_existence(filename):
@@ -34,14 +32,10 @@ def convert_xls(filename):
 	subprocess.call(["ssconvert", "--export-type=Gnumeric_Excel:excel_dsf", filename, xls_filename])
 	return(xls_filename)
 
-
-#ssconvert --export-type="Gnumeric_Excel:excel_dsf"
-
-def parse_xlsx(filename):
+def parse_xls(filename):
 	book = x.open_workbook(filename, formatting_info=True)
 	for sheet in book.sheets():
 		sheet_name = sheet.name.lower()
-		print(sheet_name)
 		if "debrief" in sheet_name:
 			debrief_sheet = sheet_name
 
@@ -50,6 +44,22 @@ def parse_xlsx(filename):
 	else:
 		print("found debrief sheet")
 
+	rows, cols = sheet.nrows, sheet.ncols
+	print "Number of rows: %s   Number of cols: %s" % (rows, cols)
+	for row in range(rows):
+		for col in range(cols):
+			cell = sheet.cell(row,col)
+			#print(cell.value)
+
+			xfx = sheet.cell_xf_index(row, col)
+			xf = book.xf_list[xfx]
+			bgx = xf.background.pattern_colour_index
+			rgb = book.colour_map[bgx]
+			if rgb!=(0,0,0):
+				print(rgb)
+
+def clean_files(xls_filename):
+	os.remove(xls_filename)
 
 
 def main():
@@ -65,10 +75,9 @@ def main():
 		print("converting to xls")
 		xls_filename = convert_xls(filename)
 		print("parsing xls")
-		parse_xlsx(xls_filename)
-
-
-	
+		parse_xls(xls_filename)
+		print("cleaning files")
+		clean_files(xls_filename)
 
 if __name__ == '__main__':
 	main()
