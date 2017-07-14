@@ -3,6 +3,7 @@ import os
 import subprocess
 import openpyxl as xl
 import xlrd as x
+import xlutils as xu
 
 # verifies that a given filename has .xlsx extension
 # if it does not, an error is thrown
