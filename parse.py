@@ -27,22 +27,27 @@ def check_existence(filename):
 	if not os.path.isfile(filename):
 		sys.exit("file must exist")
 
+# converts xlsx file to xls file since xlrd will take xls formatting
 def convert_xls(filename):
 	xls_filename = filename[0:-4]+"xls"
-	subprocess.call(["ssconvert", "--export-type=Gnumeric_Excel:excel_dsf", filename, xls_filename])
+	subprocess.call(["ssconvert", "--export-type=Gnumeric_Excel:excel_dsf",
+		filename, xls_filename])
 	return(xls_filename)
 
+# look through xls file, find cells with background color
 def parse_xls(filename):
 	book = x.open_workbook(filename, formatting_info=True)
 	for sheet in book.sheets():
 		sheet_name = sheet.name.lower()
 		if "debrief" in sheet_name:
 			debrief_sheet = sheet_name
+			break
 
 	if not 'debrief_sheet' in locals():
 		sys.exit("no debrief sheet found in .xlsx file")
 	else:
 		print("found debrief sheet")
+		print(sheet.name)
 
 	rows, cols = sheet.nrows, sheet.ncols
 	print "Number of rows: %s   Number of cols: %s" % (rows, cols)
@@ -56,11 +61,11 @@ def parse_xls(filename):
 			bgx = xf.background.pattern_colour_index
 			rgb = book.colour_map[bgx]
 			if rgb!=(0,0,0):
-				print(rgb)
+				print("in row "+str(row+1)+" column "+str(col)+" : "+str(rgb))
 
+# remove converted xls file
 def clean_files(xls_filename):
 	os.remove(xls_filename)
-
 
 def main():
 	print("checking command line arguments")
