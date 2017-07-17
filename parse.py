@@ -1,9 +1,9 @@
 import sys
 import os
 import subprocess
-import openpyxl as xl
 import xlrd as x
-import xlutils as xu
+from xlutils.copy import copy
+import xlwt as xlwt
 
 # verifies that a given filename has .xlsx extension
 # if it does not, an error is thrown
@@ -37,6 +37,11 @@ def convert_xls(filename):
 
 # look through xls file, find cells with background color
 def parse_xls(filename):
+	xlwt_workbook = xlwt.Workbook()
+	xls_save_filename = filename[0:-4]+"_biodata_updates.xls"
+	xlwt_sheet = xlwt_workbook.add_sheet("Debrief")
+	row_pointer = 0
+
 	book = x.open_workbook(filename, formatting_info=True)
 	for sheet in book.sheets():
 		sheet_name = sheet.name.lower()
@@ -50,7 +55,7 @@ def parse_xls(filename):
 		print("found debrief sheet")
 		print(sheet.name)
 
-	header = get_header(sheet, 0)
+	header_location = get_header(sheet, 0)
 
 	rows, cols = sheet.nrows, sheet.ncols
 	print "Number of rows: %s   Number of cols: %s" % (rows, cols)
@@ -63,8 +68,14 @@ def parse_xls(filename):
 			xf = book.xf_list[xfx]
 			bgx = xf.background.pattern_colour_index
 			rgb = book.colour_map[bgx]
-			#if rgb!=(0,0,0):
-				#print("in row "+str(row+1)+" column "+str(col)+" : "+str(rgb))
+			if rgb!=(0,0,0):
+				print("highlight in row "+str(row+1)+" column "+str(col)+" : "+str(rgb))
+				style = xlwt.easyxf('pattern: pattern solid;')
+				style.pattern.pattern_fore_colour = 50
+				xlwt_sheet.write(row_pointer,col,cell.value,style)
+				row_pointer+=1
+
+	xlwt_workbook.save(xls_save_filename)
 
 # get header row from sheet
 def get_header(sheet, row):
