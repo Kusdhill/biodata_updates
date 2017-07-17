@@ -50,6 +50,8 @@ def parse_xls(filename):
 		print("found debrief sheet")
 		print(sheet.name)
 
+	header = get_header(sheet, 0)
+
 	rows, cols = sheet.nrows, sheet.ncols
 	print "Number of rows: %s   Number of cols: %s" % (rows, cols)
 	for row in range(rows):
@@ -61,8 +63,35 @@ def parse_xls(filename):
 			xf = book.xf_list[xfx]
 			bgx = xf.background.pattern_colour_index
 			rgb = book.colour_map[bgx]
-			if rgb!=(0,0,0):
-				print("in row "+str(row+1)+" column "+str(col)+" : "+str(rgb))
+			#if rgb!=(0,0,0):
+				#print("in row "+str(row+1)+" column "+str(col)+" : "+str(rgb))
+
+# get header row from sheet
+def get_header(sheet, row):
+	cols = sheet.ncols
+	header_found = False
+	debrief_words = ["attended","first name","last name",
+		"employer","relationship"]
+	column_words = []
+	for col in range(cols):
+		cell = sheet.cell(row,col)
+		value = str(cell.value)
+		if type(value) is str:
+			column_words.append(value.lower())
+		else:
+			pass
+
+	for dword in debrief_words:
+		for cword in column_words:
+			if dword in cword:
+				header_found = True
+
+	if header_found:
+		print("header found in row "+str(row))
+		return(row)
+	else:
+		row+=1
+		return(get_header(sheet, row))
 
 # remove converted xls file
 def clean_files(xls_filename):
