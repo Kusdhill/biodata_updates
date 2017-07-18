@@ -48,7 +48,7 @@ def parse_xls(filename):
 	if not 'debrief_sheet' in locals():
 		sys.exit("no debrief sheet found in .xlsx file")
 	else:
-		print("found debrief sheet")
+		#print("found debrief sheet")
 		print(sheet.name)
 
 	print("finding header location")
@@ -57,6 +57,7 @@ def parse_xls(filename):
 	print("finding highlights")
 	rows, cols = sheet.nrows, sheet.ncols
 	rgb_row_col = []
+	clean_row_col = []
 	for row in range(rows):
 		for col in range(cols):
 			prev_col = col-1
@@ -67,23 +68,23 @@ def parse_xls(filename):
 			bgx = xf.background.pattern_colour_index
 			rgb = book.colour_map[bgx]
 			if rgb!=(0,0,0):
-				print("highlight in row "+str(row+1)+" column "+str(col)+" : "+str(rgb))
+				#print("highlight in row "+str(row+1)+" column "+str(col)+" : "+str(rgb))
 				if row==header_location:
 					pass
 				else:
 					rgb_row_col.append([row,col])
 
-	print(rgb_row_col)
+	#print(rgb_row_col)
 	print("writing xls")
-	write_xls(filename, sheet, rgb_row_col, header_location)
+	write_xls(filename, sheet, rgb_row_col, clean_row_col, header_location)
 
 
 
-def write_xls(filename, sheet, rgb_locations, header_location):
+def write_xls(filename, sheet, rgb_locations, clean_locations, header_location):
 
 	xlwt_workbook = xlwt.Workbook()
 	xls_save_filename = filename[0:-4]+"_biodata_updates.xls"
-	xlwt_sheet = xlwt_workbook.add_sheet("Debrief")
+	xlwt_sheet = xlwt_workbook.add_sheet("Debrief", cell_overwrite_ok=True)
 	row_pointer = 1
 
 	header_style = xlwt.easyxf('pattern: pattern solid;')
@@ -116,6 +117,17 @@ def write_xls(filename, sheet, rgb_locations, header_location):
 		else:
 			xlwt_sheet.write(row_pointer,col,cell.value,style)
 
+	for i in range(0, len(rgb_locations)):
+		row = rgb_locations[i][0]
+		for col in range(0, sheet.ncols):
+			cell=sheet.cell(row,col)
+			if col==rgb_locations[i][1]:
+				print("EXCLUDING "+str(cell.value))
+				continue
+			else:
+				print(cell.value)
+
+
 	xlwt_workbook.save(xls_save_filename)
 
 
@@ -140,7 +152,7 @@ def get_header(sheet, row):
 				header_found = True
 
 	if header_found:
-		print("header found in row "+str(row))
+		#print("header found in row "+str(row))
 		return(row)
 	else:
 		row+=1
@@ -166,6 +178,7 @@ def main():
 		parse_xls(xls_filename)
 		print("cleaning files")
 		clean_files(xls_filename)
+		print("complete!")
 
 if __name__ == '__main__':
 	main()
