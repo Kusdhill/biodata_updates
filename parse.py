@@ -37,10 +37,6 @@ def convert_xls(filename):
 
 # look through xls file, find cells with background color
 def parse_xls(filename):
-	xlwt_workbook = xlwt.Workbook()
-	xls_save_filename = filename[0:-4]+"_biodata_updates.xls"
-	xlwt_sheet = xlwt_workbook.add_sheet("Debrief")
-	row_pointer = 0
 
 	book = x.open_workbook(filename, formatting_info=True)
 	for sheet in book.sheets():
@@ -55,14 +51,16 @@ def parse_xls(filename):
 		print("found debrief sheet")
 		print(sheet.name)
 
+	print("finding header location")
 	header_location = get_header(sheet, 0)
 
+	print("finding highlights")
 	rows, cols = sheet.nrows, sheet.ncols
-	print "Number of rows: %s   Number of cols: %s" % (rows, cols)
+	rgb_row_col = []
 	for row in range(rows):
 		for col in range(cols):
+			prev_col = col-1
 			cell = sheet.cell(row,col)
-			#print(cell.value)
 
 			xfx = sheet.cell_xf_index(row, col)
 			xf = book.xf_list[xfx]
@@ -70,12 +68,56 @@ def parse_xls(filename):
 			rgb = book.colour_map[bgx]
 			if rgb!=(0,0,0):
 				print("highlight in row "+str(row+1)+" column "+str(col)+" : "+str(rgb))
-				style = xlwt.easyxf('pattern: pattern solid;')
-				style.pattern.pattern_fore_colour = 50
-				xlwt_sheet.write(row_pointer,col,cell.value,style)
-				row_pointer+=1
+				if row==header_location:
+					pass
+				else:
+					rgb_row_col.append([row,col])
+
+	print(rgb_row_col)
+	print("writing xls")
+	write_xls(filename, sheet, rgb_row_col, header_location)
+
+
+
+def write_xls(filename, sheet, rgb_locations, header_location):
+
+	xlwt_workbook = xlwt.Workbook()
+	xls_save_filename = filename[0:-4]+"_biodata_updates.xls"
+	xlwt_sheet = xlwt_workbook.add_sheet("Debrief")
+	row_pointer = 1
+
+	header_style = xlwt.easyxf('pattern: pattern solid;')
+	header_style.pattern.pattern_fore_colour = 150
+
+	style = xlwt.easyxf('pattern: pattern solid;')
+	style.pattern.pattern_fore_colour = 50
+
+	for col in range(0,sheet.ncols):
+		cell = sheet.cell(header_location,col)
+		xlwt_sheet.write(0,col,cell.value,header_style)
+	print("written header")
+
+	for i in range(0, len(rgb_locations)):
+		row = rgb_locations[i][0]
+		prev_row = rgb_locations[i-1][0]
+		col = rgb_locations[i][1]
+		prev_col = rgb_locations[i-1][1]
+
+		cell = sheet.cell(row,col)
+		
+		if prev_row==row or row<2:
+			#print("passing "+str(row)+" "+str(prev_row)+" "+cell.value+"\n")
+			pass
+		else:
+			#print(str(row)+" "+str(prev_row)+"\n")
+			row_pointer+=1
+		if cell.value=="":
+			pass
+		else:
+			xlwt_sheet.write(row_pointer,col,cell.value,style)
 
 	xlwt_workbook.save(xls_save_filename)
+
 
 # get header row from sheet
 def get_header(sheet, row):
