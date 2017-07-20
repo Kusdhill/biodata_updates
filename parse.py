@@ -87,7 +87,7 @@ def write_xls(filename, sheet, rgb_locations, clean_locations, header_location):
 	#print(clean_locations)
 	xlwt_workbook = xlwt.Workbook()
 	xls_save_filename = filename[0:-4]+"_biodata_updates.xls"
-	xlwt_sheet = xlwt_workbook.add_sheet("Debrief", cell_overwrite_ok=True)
+	xlwt_sheet = xlwt_workbook.add_sheet("Debrief", cell_overwrite_ok=False)
 	row_pointer = 1
 
 	header_style = xlwt.easyxf('pattern: pattern solid;')
@@ -126,31 +126,41 @@ def write_xls(filename, sheet, rgb_locations, clean_locations, header_location):
 		rgb_rows.append(rgb_row)
 	print(rgb_rows)
 
+	# handles clean col adding based on rgb cols
 	clean_rows = {}
 	for i in range(0, len(clean_locations)):
 		clean_row = clean_locations[i][0]
 		clean_col = clean_locations[i][1]
-		if clean_col>sheet.ncols:
-			continue
 		if not clean_row in clean_rows:
 			clean_rows[clean_row] = [clean_col]
 		else:
 			clean_rows[clean_row].append(clean_col)
 	#print(clean_rows)
 
-	for i in range(0, len(rgb_locations)):
-		rgb_row = rgb_locations[i][0]
-		print(rgb_row)
+	# removes rows from clean_rows if they aren't in rgb rows
+	# since we only care about rows that have rgb
+	print("rows")
+	for i in range(0, max(rgb_rows)+1):
+		#rgb_row = rgb_locations[i][0]
+		
 		if i in rgb_rows:
-			print(str(rgb_row)+" is in clean_rows")
+			print(str(i)+" is in rbg, keeping in clean_rows")
 		else:
-			print("deleting row")
-			del clean_rows[i]
+			if i in clean_rows:
+				print(str(i)+ " is not in rgb, deleting row")
+				del clean_rows[i]
+			else:
+				pass
+
+    # shave off unnecessary values
+	for key in clean_rows.keys():
+		if key>max(rgb_rows):
+			del clean_rows[key]
 
 	#print(clean_rows)
 
 	print(rgb_locations)
-	print(clean_rows)
+	print(clean_rows.keys())
 
 	row_pointer = 1
 	for key in clean_rows:
@@ -160,7 +170,7 @@ def write_xls(filename, sheet, rgb_locations, clean_locations, header_location):
 			col = value
 			cell = sheet.cell(row,col)				
 		
-			print("writing "+str(cell.value))
+			#print("writing "+str(cell.value))
 			xlwt_sheet.write(row_pointer,col,cell.value)
 		row_pointer+=1
 
