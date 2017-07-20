@@ -73,6 +73,8 @@ def parse_xls(filename):
 					pass
 				else:
 					rgb_row_col.append([row,col])
+			else:
+				clean_row_col.append([row,col])
 
 	#print(rgb_row_col)
 	print("writing xls")
@@ -82,6 +84,7 @@ def parse_xls(filename):
 
 def write_xls(filename, sheet, rgb_locations, clean_locations, header_location):
 
+	#print(clean_locations)
 	xlwt_workbook = xlwt.Workbook()
 	xls_save_filename = filename[0:-4]+"_biodata_updates.xls"
 	xlwt_sheet = xlwt_workbook.add_sheet("Debrief", cell_overwrite_ok=True)
@@ -117,15 +120,49 @@ def write_xls(filename, sheet, rgb_locations, clean_locations, header_location):
 		else:
 			xlwt_sheet.write(row_pointer,col,cell.value,style)
 
+	rgb_rows = []
 	for i in range(0, len(rgb_locations)):
-		row = rgb_locations[i][0]
-		for col in range(0, sheet.ncols):
-			cell=sheet.cell(row,col)
-			if col==rgb_locations[i][1]:
-				print("EXCLUDING "+str(cell.value))
-				continue
-			else:
-				print(cell.value)
+		rgb_row = rgb_locations[i][0]
+		rgb_rows.append(rgb_row)
+	print(rgb_rows)
+
+	clean_rows = {}
+	for i in range(0, len(clean_locations)):
+		clean_row = clean_locations[i][0]
+		clean_col = clean_locations[i][1]
+		if clean_col>sheet.ncols:
+			continue
+		if not clean_row in clean_rows:
+			clean_rows[clean_row] = [clean_col]
+		else:
+			clean_rows[clean_row].append(clean_col)
+	#print(clean_rows)
+
+	for i in range(0, len(rgb_locations)):
+		rgb_row = rgb_locations[i][0]
+		print(rgb_row)
+		if i in rgb_rows:
+			print(str(rgb_row)+" is in clean_rows")
+		else:
+			print("deleting row")
+			del clean_rows[i]
+
+	#print(clean_rows)
+
+	print(rgb_locations)
+	print(clean_rows)
+
+	row_pointer = 1
+	for key in clean_rows:
+		for value in clean_rows[key]:
+			#print(key,value)
+			row = key
+			col = value
+			cell = sheet.cell(row,col)				
+		
+			print("writing "+str(cell.value))
+			xlwt_sheet.write(row_pointer,col,cell.value)
+		row_pointer+=1
 
 
 	xlwt_workbook.save(xls_save_filename)
